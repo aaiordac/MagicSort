@@ -155,6 +155,70 @@ public class MagicSort {
             return Arrays.asList(array);
         }
     }
+    
+    
+    private static <X> List<X> sortAndLimitBSearchAiordachioaie(final Collection<? extends X> inputCollection,
+                                                   final int limitResultsTo,
+                                                   final Comparator<? super X> comparator) {
+        Objects.requireNonNull(inputCollection);
+        Objects.requireNonNull(comparator);
+
+        // Keep consistent with the native API
+        if (limitResultsTo < 0)
+            throw new IllegalArgumentException(String.valueOf(limitResultsTo));
+
+        if (limitResultsTo < 1 || inputCollection.isEmpty())
+            return Collections.emptyList();
+
+        //noinspection unchecked
+        X[] array = (X[]) new Object[Math.min(inputCollection.size(), limitResultsTo)];
+
+        X lastEntry = null;
+        int populated = 0;
+
+        for (X entry : inputCollection) {
+            if (entry == null)
+                continue;
+
+            if (populated < array.length) {
+
+                array[populated++] = entry;
+
+                if (populated == array.length) { // population finished, sort in-place and proceed with boundary checks
+                    Arrays.parallelSort(array, comparator);
+                    lastEntry = array[array.length - 1];
+                }
+
+            } else if (comparator.compare(entry, lastEntry) < 0) {
+
+                int insertionPoint = Arrays.binarySearch(array, entry, comparator);
+
+                // Catch bad comparators that lie.
+                if (insertionPoint == -(array.length + 1)) {
+                    continue;
+                }
+
+                int pos = insertionPoint;
+
+                if (insertionPoint < 0)
+                    pos = (-insertionPoint) - 1;
+
+                System.arraycopy(array, pos, array, pos + 1, array.length - (pos + 1));
+                array[pos] = entry;
+
+                lastEntry = array[array.length - 1];
+
+            }
+        }
+
+        if (populated < array.length) { /* Special case - the working array is only partially filled and therefore still unsorted as well */
+            X[] subArray = Arrays.copyOfRange(array, 0, populated);
+            Arrays.parallelSort(subArray, comparator);
+            return Arrays.asList(subArray);
+        } else {
+            return Arrays.asList(array);
+        }
+    }
 
     /**
      * Returns a {@code Collector} that accumulates the top n {@code Comparable} (as determined
