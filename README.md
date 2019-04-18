@@ -1,4 +1,4 @@
-# Magic Sort
+# Magic Sort (updated v2)
 
 Fairly efficient sort implementation when you are only interested in top n items from the collection. Allows to easily find top elements in large (a few billion or so entries is not a problem) collections where JDK built in classes would give up long ago. Replaced a 20 node map-reduce cluster in one of my experiments.
 
